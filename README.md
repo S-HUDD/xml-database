@@ -61,6 +61,6 @@ This is accomplished in the following steps:
 
 To decrease runtime, the program uses exclusion tags. These are the tags of missing elements that appeared during the preliminary runs of this program when it ran every element in the source_file against every element in the dest_file. Now only the elements with the exclusion tags will be compared. In order to improve the exclusion list, 1 in every n tags is let in randomly to see if it is a missing tag. If the element is indeed missing from the dest_file it is added to the exclusion list as a new tag.
 
-#### insert_index.py
+#### index_inserter.py
 ### xml_class.py
 ### dataframe_maker.py
