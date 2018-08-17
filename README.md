@@ -10,7 +10,7 @@ At the time of writing, the program is broken up into 4 major processes.
 3. Each uberfile is assigned an object "xml_class" where useful information is stored as class attributes. (xml_class.py)
 4. Each instance of xml_class is added to a pandas database where each row is a case and each column is an xml_class attribute. (dataframe_maker.py)
 
-Each of the scripts is commented in detail but the generalities of each will be written below.
+Each of the functions is commented in detail but a general review of each is given below.
 
 ## Setup
 Code was written and tested with [Anaconda3](https://conda.io/docs/user-guide/install/download.html)'s python libraries and includes the use of the [pandas](https://pandas.pydata.org/) and [lxml](https://lxml.de/) modules.
