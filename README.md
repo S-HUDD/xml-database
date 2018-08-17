@@ -72,4 +72,31 @@ This script is designed to work as a part of the uber_maker() function. The proc
 5. Inserting that element into the matching path hierarchy of the destination .xml file
 
 ### xml_class.py
+This designs a class that accepts a string containing the location of an xml file and creates a series of instances that collect parsed data from the file.
+At the moment this class relies heavily on the XPath functinality of etree, whether this is the most appropirate library to use is unkown at the time of writing. Beautiful Soup 4 may be another module worth looking at.
+
+As of 2018-08-17 This file contains instances for:
+```python
+self.case_name - returns the text of the <fullCaseName> tag as a string
+self.docket_number - returns a string containing just the number (e.g. 46-98)
+self.lexis_ID - returns a string containing the 28 character lexis ID
+self.page_sceheme_citations - returns a dictionary of the text and attributes of the children in the <citations> tag of the <courtCaseHead> root element in the form of {subelement text:subelement attribute}
+self.date_decide - returns a dictionary of the text and attributes of the <decisionDate> tag in the form of {element text:element attributes}
+self.date_argue - returns a dictionary of the text and attributes of the <argueDate> tag in the form of {element text:element attributes}
+self.case_history - returns a dictionary of {text of caseHistory element: {dict of attributes of caseHistory element}}
+self.case_history_citations - returns a dictionary of {text of each citation in caseHistory element: {dict of attribute of each citation in caseHistory element}}
+self.case_summaries - returns a dictionary of {text of caseSummary element: {dict of attributes of caseSummary element}}
+self.case_summaries_citations - returns a dictionary of {text of each citation in caseSummary element: {dict of attribute of each citation in caseSummary element}}
+self.judges - returns a dictionary of the text and an attempted list of the <judges> tag in the form of {element text:split of the element text using ","(only works with lists of only judges)}
+self.judge_opinion - returns a dictionary of {[text of <caseOpinionBy>]:[attribute value of opinionType in <opinion>]} for every subelement of <caseOpinions>
+self.opinion_text - returns a dictionary of {[attribute value of opinionType in <opinion>]:[iterative text of all child elements of the opinion]} for all children in <opinions>
+self.opinion_text_formatted = returns the same dictionary as self.opinion_text but inclueds paragraph and anchor breaks
+self.opinion_citations - returns a dictioary of {[attribute value of opinionType in <opinion>]:[list of dictioaries {citation text:citation attribute} for all citations of that opinion type]} for all children in <opinions>
+self.related_content - returns a dictionary of {[text of each relatedContent item]:{[relateContent item tag]:{relatedContent item attributes}}}
+self.classification_items - returns a dictionary of {[className text]:[classCode text]} for each item in classification items
+self.all_citations - returns a dictionary of {citation text:citation attribute} for all citations in the .xml
+self.opinion_text_count - returns a dictioary of {[opinionType]:[list of ordered pair of word count in that text block]} (e.g. {'majority':[('the', 365),('it', 220),('a', 150)...]}) 
+self.opinion_citations_count - returns a dictionary of {opinionType:(citation_attribute,citation attribute count)} for each citation in each opinion type
+self.all_citations_count - similar to self.opinion_citations_count but counts for all citations in the entire .xml file
+```
 ### dataframe_maker.py
