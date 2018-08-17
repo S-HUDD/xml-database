@@ -1,54 +1,70 @@
 '''
 This designs a class that accepts a string containing the location of an xml file and creates a series of instances that collect parsed data from the file.
-This file will likely be combined with pandas or pickle to preserve the data.
-At the moment this class relies heavily on the XPath functinality of etree, whether this is the most appropirate library to use is debatable. Beautiful Soup 4 may be another module worth looking at.
+At the moment this class relies heavily on the XPath functinality of etree, whether this is the most appropirate library to use is unkown at the time of writing. Beautiful Soup 4 may be another module worth looking at.
 
-As of 2018-07-31 This file contains instances for:
+As of 2018-08-17 This file contains instances for:
+
 # self.case_name - returns the text of the <fullCaseName> tag as a string
+# self.docket_number - returns a string containing just the number (e.g. 46-98)
+# self.lexis_ID - returns a string containing the 28 character lexis ID
 # self.page_sceheme_citations - returns a dictionary of the text and attributes of the children in the <citations> tag of the <courtCaseHead> root element in the form of {subelement text:subelement attribute}
 # self.date_decide - returns a dictionary of the text and attributes of the <decisionDate> tag in the form of {element text:element attributes}
 # self.date_argue - returns a dictionary of the text and attributes of the <argueDate> tag in the form of {element text:element attributes}
+# self.case_history - returns a dictionary of {text of caseHistory element: {dict of attributes of caseHistory element}}
+# self.case_history_citations - returns a dictionary of {text of each citation in caseHistory element: {dict of attribute of each citation in caseHistory element}}
+# self.case_summaries - returns a dictionary of {text of caseSummary element: {dict of attributes of caseSummary element}}
+# self.case_summaries_citations - returns a dictionary of {text of each citation in caseSummary element: {dict of attribute of each citation in caseSummary element}}
 # self.judges - returns a dictionary of the text and an attempted list of the <judges> tag in the form of {element text:split of the element text using ","(only works with lists of only judges)}
 # self.judge_opinion - returns a dictionary of {[text of <caseOpinionBy>]:[attribute value of opinionType in <opinion>]} for every subelement of <caseOpinions>
 # self.opinion_text - returns a dictionary of {[attribute value of opinionType in <opinion>]:[iterative text of all child elements of the opinion]} for all children in <opinions>
+# self.opinion_text_formatted = returns the same dictionary as self.opinion_text but inclueds paragraph and anchor breaks
 # self.opinion_citations - returns a dictioary of {[attribute value of opinionType in <opinion>]:[list of dictioaries {citation text:citation attribute} for all citations of that opinion type]} for all children in <opinions>
+# self.related_content - returns a dictionary of {[text of each relatedContent item]:{[relateContent item tag]:{relatedContent item attributes}}}
+# self.classification_items - returns a dictionary of {[className text]:[classCode text]} for each item in classification items
+# self.all_citations - returns a dictionary of {citation text:citation attribute} for all citations in the .xml
+# self.opinion_text_count - returns a dictioary of {[opinionType]:[list of ordered pair of word count in that text block]} (e.g. {'majority':[('the', 365),('it', 220),('a', 150)...]}) 
+# self.opinion_citations_count - returns a dictionary of {opinionType:(citation_attribute,citation attribute count)} for each citation in each opinion type
+# self.all_citations_count - similar to self.opinion_citations_count but counts for all citations in the entire .xml file
 
-Add
-# metadata (done)
-# docket number (done)
-# case history (done)
-# case summaries (done)
-who signed opinions
+
+todo:
+opinion signtures
 '''
 
 from lxml import etree as et
 import pandas as pd
 import os
 
+
+# instances of xml_class are created by calling xml_class(xml) where xml is the path to an uber_xml case file 
 class xml_class:
     def __init__(self, uber_xml):
         ###UBERROOT###
-        ##Uber_xml##
+        # creating an attribute self.uber_xml and an internal variable uber_root
         self.uber_xml = uber_xml
         uber_root = et.parse(uber_xml).getroot()
         
         ###HEADING###
+        
         ##Indexing##
         self.case_name = uber_root.find('.//fullCaseName').text
         self.docket_number = uber_root.findtext('.//docketNumber').replace('No. ','')
-        self.lexis_cite = uber_xml[len(uber_xml)-32:len(uber_xml)-4] #due to the "dc:" prefix on the subelements of the '<dc:metadata>' element, the dc:identifier child can't be parsed by lxml to extract the lexis cite. Might be a work-around for it but this solution works for now, even if it's not elegant.
+        self.lexis_ID = uber_xml[len(uber_xml)-32:len(uber_xml)-4] #due to the "dc:" prefix on the subelements of the '<dc:metadata>' element, the dc:identifier child can't be parsed by lxml to extract the lexis cite. Might be a work-around for it but this solution works for now, even if it's not elegant.
+        
         ##Heading Citations, decision/argue dates##
         self.page_sceheme_citations = {element.text:element.attrib for element in uber_root.findall('.//citeForThisResource')}
         self.date_decide = uber_root.find('.//decisionDate').attrib
         date_decide_formatted = self.date_decide.get('month')+'/'+self.date_decide.get('day')+'/'+self.date_decide.get('year')
         self.date_argue = uber_root.find('.//arguedDate').attrib
+        
         ##History and summaries##
         self.case_history = {''.join(subelement.itertext()).encode('utf-8'):subelement.attrib for subelement in uber_root.find('.//*caseHistory')}
-#         self.case_history_citations = {''.join(subelement.itertext()).encode('utf-8'):subelement.attrib for subelement in uber_root.findall('.//caseHistory//citation')}
+        self.case_history_citations = {''.join(subelement.itertext()).encode('utf-8'):subelement.attrib for subelement in uber_root.findall('.//caseHistory//citation')}
         self.case_summaries = {subelement.tag:''.join(subelement.itertext()).encode('utf-8') for subelement in uber_root.find('.//*summaries')}
         self.case_summaries_citations = {''.join(subelement.itertext()).encode('utf-8'):subelement.attrib for subelement in uber_root.findall('.//summaries//citation')}
         
         ###BODY###
+        
         ##Justices##
         if uber_root.findtext('.//panel/judges') != None:
             self.judges = {uber_root.findtext('.//panel/judges'):uber_root.findtext('.//panel/judges').split(", ")}
@@ -112,6 +128,7 @@ class xml_class:
             
             
         ###Counters###
+        # these class attributes create dictionaries of ordered pairs counting instances of words and citations
         
         ##dict of every citation in the document##
         self.all_citations = {''.join(element.itertext()):element.attrib for element in uber_root.findall('.//citation')}
@@ -156,11 +173,11 @@ class xml_class:
             
             
  
-test1 = xml_class('PSULawProject/uberfiles/uber-3S4X-3SG0-003B-71N0-00000-00.xml')
-log = open('PSULawProject/log/class_log.txt','w', encoding = 'utf-8')
-log_list = [item+"\n"+str(getattr(test1,item))+"\n"*2 for item in vars(test1).keys()]
-for item in log_list:
-    log.write(item)
+# test1 = xml_class()
+# log = open('logs/class_log.txt','w', encoding = 'utf-8')
+# log_list = [item+"\n"+str(getattr(test1,item))+"\n"*2 for item in vars(test1).keys()]
+# for item in log_list:
+#     log.write(item)
 
 
 # import pickle
