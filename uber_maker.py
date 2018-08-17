@@ -17,7 +17,7 @@ from lxml import etree as et
 import os
 from random import randint
 import datetime as dt
-from index_insert import index_insert
+from index_inserter import index_inserter
 
 # all paths that don't end in a file must end with '/'!
 
@@ -128,7 +128,7 @@ def uber_maker(s_dir,d_dir,e_file):
                         else:
                             
                             # element inserted into the proper hierarchy using index_insert function
-                            index_insert(el,uber_tree,d_dir+uber_xml,uber_xml,log)
+                            index_inserter(el,uber_tree,d_dir+uber_xml,uber_xml,log)
                             
                             # element attributes are added to the uber_list to avoid duplicates
                             uber_list.append(el.attrib)
