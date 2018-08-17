@@ -13,9 +13,9 @@ At the time of writing, the program is broken up into 4 major processes.
 Each of the scripts is commented in detail but the generalities of each will be written below.
 
 ## Setup
-Code was written and tested with [Anaconda3](https://conda.io/docs/user-guide/install/download.html)'s python library and includes the use of [pandas](https://pandas.pydata.org/) and [lxml](https://lxml.de/) libraries.
+Code was written and tested with [Anaconda3](https://conda.io/docs/user-guide/install/download.html)'s python libraries and includes the use of the [pandas](https://pandas.pydata.org/) and [lxml](https://lxml.de/) modules.
 
-lxml is easiest to install via pip in the command line:
+The simplest method to install lxml is via pip in the command line:
 ```
 >>> pip install lxml
 ```
@@ -57,10 +57,19 @@ This is accomplished in the following steps:
 2. Saving the primary file as the base for a new master file that will contain all the disparate subelements, hereby referred to as the "uberfile"
 3. To iterate through the rest of the files and find the necessary subelements, and  then writing them to the uberfile at the proper hierarchy position*
 
-	**step 3 is done with the help of the index_insert function found in index_insert.py*
+	**step 3 is done with the help of the index_inserter function found in index_inserter.py*
 
 To decrease runtime, the program uses exclusion tags. These are the tags of missing elements that appeared during the preliminary runs of this program when it ran every element in the source_file against every element in the dest_file. Now only the elements with the exclusion tags will be compared. In order to improve the exclusion list, 1 in every n tags is let in randomly to see if it is a missing tag. If the element is indeed missing from the dest_file it is added to the exclusion list as a new tag.
 
 #### index_inserter.py
+This script is designed to work as a part of the uber_maker() function. The process is as follows:
+1. Accepting information about an element missing from the destination file
+2. Locating it's proper bottom-level position in the source .xml hierarchy using the lxml functions ```element.getparent()
+``` and ```element.index(sub_elemenet)```
+3. Using a while loop to create a list of all the parent tags immediately above it
+4. Constructing a path out of the element tags starting immediately below the root
+    4a. If the path doesn't exist within the destination file, it is constructed using the same path list
+5. Inserting that element into the matching path hierarchy of the destination .xml file
+
 ### xml_class.py
 ### dataframe_maker.py
