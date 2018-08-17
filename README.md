@@ -100,3 +100,8 @@ self.opinion_citations_count - returns a dictionary of {opinionType:(citation_at
 self.all_citations_count - similar to self.opinion_citations_count but counts for all citations in the entire .xml file
 ```
 ### dataframe_maker.py
+This is a simple script that incorporates the xml_class to make a dataframe.
+1. The function accepts a directory that contains 1 or more uber_files
+2. Each file is converted into an xml_class object
+3. Each file is imported into a dataframe of uberfiles where each row is a case and the columns are the xml_class attributes
+4. The dataframe is exported to .csv when complete
