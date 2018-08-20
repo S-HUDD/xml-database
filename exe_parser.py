@@ -39,12 +39,13 @@ from multiprocessing import Pool
 # destinations must end with '/'!
 def exe_parser(file_dir,dest_dir,log_var,dir_done,dir_total):
     if os.path.isdir(dest_dir+'last_line.txt') == True:
-        last_line = [int(num) for num in open(dest_dir+'last_line.txt','r')]
-        last_line = last_line[0]
-    if os.path.isdir(dest_dir) != True:
-        os.mkdir(dest_dir)
+        last_line = int(open(dest_dir+'last_line.txt','r').readline())
+    else:
+        last_line = 0
+    os.mkdir(dest_dir) if os.path.isdir(dest_dir) != True else print(dest_dir)
+    if os.path.isdir(log_var) != True:
+         os.mkdir(log_var)
     large_file = open(file_dir,'r')
-    os.mkdir(log_var) if os.path(log_var) != True else print(log_var)
     log = open(log_var+'exe_parser_log.txt','a')
     filename = ''
     line_done = 0
@@ -66,7 +67,7 @@ def exe_parser(file_dir,dest_dir,log_var,dir_done,dir_total):
                 print (filename+' written at: '+str(dt.datetime.now()))
                 total_percent = dir_done/dir_total*100
                 print ('total:'+str(total_percent)+'%'+'\n')
-                open (dest_dir+'last_line.txt','w').write(line_done)
+                open (dest_dir+'last_line.txt','w').write(str(line_done))
                 
                 log.write(filename+'\n')
                     
@@ -76,66 +77,14 @@ def exe_parser(file_dir,dest_dir,log_var,dir_done,dir_total):
                 filename = str(line)
               
                 filename = filename.replace('Content-ID: urn:contentItem:','')
-              
                 filename = filename.replace('@lexisnexis.com','')
-              
-            else:
-                filename=filename
-            line_done += 1
-
-
-def file_crack(s,d,l):
-    total = 0
-    done = 0
-    for file in os.listdir(s):
-        total +=1
-    if os.path.isdir(d) != True:
-        os.mkdir(d)
-        c_log = open(d+'completed_log.txt','a')
-        c_list = []
-    else:
-        c_log = open(d+'completed_log.txt','r')
-        c_list = [item[:len(item)-1] for item in c_log]
-    for file in os.listdir(s):
-        if file in c_list:
-            print (file + ' already complete. Skipping')
-            done += 1
-        elif os.path.getsize(s+file) >= 500000000:
-            open(d+'too_big.txt', 'a').write(str(file)+'\n')
-            print(str(file)+' IS TOO BIG \n'*100)
-            done += 1
-        else:
-            print(str(file))
-            exe_parser(s+file,d,l,done,total)
-            open(d+'completed_log.txt','a').write(str(file)+'\n')
-            done += 1
-
-source = 'media/removable/HuddartHD/Supreme_Court_Data/6443/'
-dest = 'media/removable/HuddartHD/case_files/'
-log = 'media/removable/HuddartHD/logs/'
-
-pool = Pool()
-pool.apply(file_crack, args = source,dest,log)
-# file_crack(source,dest,log)   
-            # elif that creates the filename variable if the substring 'Content-ID is found in the line string
-            elif 'Content-ID' in str(line):
-              
-                # filename first equals the whole line
-                filename = str(line)
-              
-                # the preceding part before the lexis guid is removed
-                filename = filename.replace('Content-ID: urn:contentItem:','')
-              
-                #then the following portion, leaving just the guid
-                filename = filename.replace('@lexisnexis.com','')
-              
-                # # print statement to command line for progress and debugging
-                # print(filename + '\n')
+                filename = filename.replace('\n','')
                 
-            # else statement for when the line is not the guid or the xml string, preserves the filename variable
+              
             else:
-                filename=filename
+                pass
             line_done += 1
+            last_line = line_done
 
 
 def file_crack(s,d,l):
@@ -164,10 +113,11 @@ def file_crack(s,d,l):
             open(d+'completed_log.txt','a').write(str(file)+'\n')
             done += 1
 
-source = 'media/removable/HuddartHD/Supreme_Court_Data/6443/'
-dest = 'media/removable/HuddartHD/case_files/'
-log = 'media/removable/HuddartHD/logs/'
+so = 'media/removable/HuddartHD/Supreme_Court_Data/'
+de = 'media/removable/HuddartHD/case_files/'
+lo = 'media/removable/HuddartHD/logs/'
 
 pool = Pool()
-pool.apply(file_crack, args = source,dest,log)
-# file_crack(source,dest,log)
+# result =
+pool.apply(file_crack(so,de,lo))
+# result.get(timeout=1)
