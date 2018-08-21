@@ -5,25 +5,25 @@ e.g. string with the ID "ABC" is placed in a folder with the same name where the
 
 1. string named ABC to folder ABC:
 >ABC
-	>ABC.xml
-	>ABC_1.xml
-	>ABC_2.xml
+  >ABC.xml
+  >ABC_1.xml
+  >ABC_2.xml
 2. string ABC becomes ABC_3.xml
 3. folder ABC becomes:
 >ABC
-	>ABC.xml
-	>ABC_1.xml
-	>ABC_2.xml
-	>ABC_3.xml
+  >ABC.xml
+  >ABC_1.xml
+  >ABC_2.xml
+  >ABC_3.xml
 
 Example of the header and a truncated xml lines:
 
-	1 --yytet00pubSubBoundary00tetyy
-	2 Content-ID: urn:contentItem:3RJ6-FCK0-003B-R0KR-00000-00@lexisnexis.com
-	3 Content-Type: application/vnd.courtcasedoc-newlexis+xml
-	4 Content-Length: 78755
+  1 --yytet00pubSubBoundary00tetyy
+  2 Content-ID: urn:contentItem:3RJ6-FCK0-003B-R0KR-00000-00@lexisnexis.com
+  3 Content-Type: application/vnd.courtcasedoc-newlexis+xml
+  4 Content-Length: 78755
 
-	5 <?xml version="1.0" encoding="UTF-8"?><!--Transformation version 1.1--><courtCaseDoc xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.lexisnexis.com/xmlschemas/content/public/courtcasedoc/1/" schemaVersion="1.0"><courtCaseDocHead><caseInfo><caseName><fullCaseName/><shortCaseName>Feist Publ'ns, Inc. v. Rural Tel. Serv. C ... </courtCaseDoc>
+  5 <?xml version="1.0" encoding="UTF-8"?><!--Transformation version 1.1--><courtCaseDoc xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.lexisnexis.com/xmlschemas/content/public/courtcasedoc/1/" schemaVersion="1.0"><courtCaseDocHead><caseInfo><caseName><fullCaseName/><shortCaseName>Feist Publ'ns, Inc. v. Rural Tel. Serv. C ... </courtCaseDoc>
 
 The portion of line 2 named "3RJ6-FCK0-003B-R0KR-00000-00" is what will become the filename variable.
 The program searches for 'courtCaseDoc' within the string to determine whether a line is an xml or not.
@@ -32,84 +32,92 @@ The program searches for 'courtCaseDoc' within the string to determine whether a
 
 
 import os
+import datetime as dt
+from multiprocessing import Pool
 
-# function exe_parser accepts 2 arguments: A source_file argument "file_dir" that is our large native ".exe" file. And a destination file that we will save to
+# function exe_parser accepts 3 arguments: A source_file argument "file_dir" that is our large native ".exe" file, a destination file that we will save to, and a log path
 # destinations must end with '/'!
-def exe_parser(file_dir,dest_dir):  
-	
-	# create destination file if it doesn't already exist    
-	if os.path.isdir(dest_dir) != True:    
-		os.mkdir(dest_dir) 
-		
-	# open our large file as readable 
-	large_file = open(file_dir,'r')
-	
-	# open our log file to the log directory as appendable
-	log = open('logs/'+'exe_parser_log.txt','a')
-	
-	# set the filename variable to '' before we begin the loop
-	filename = ''
-	
-	# the for loop iterates through each line of the large_file and either: 1. saves the file to dest_dir, 1. finds the filename line and creates the filename variable, or 3. else statement if neither of the two lines are encountered, retaining the filename variable
-	for line in large_file:
-		
-		# if statement that checks if line is the xml string and that it has a useable filename variable
-        if 'courtCaseDoc' in str(line) and filename != '':
-			
-			# preparing a save destination variable save_dest
-            save_dest = dest_dir+filename+'/'
-			
-			# if loop to check if save_dest exists
-            if os.path.isdir(save_dest) == False:
-                os.mkdir(save_dest)
-				
-				# since this file is the first to be saved to the new dirctory, it is not given a numbered suffix
-                open(save_dest+filename+'.xml','w').write(line)
-				
-             #else statement for if the filename directory already exists
-			else:
-				
-				# creating a file iteration variable and using it to count how many files are already in the directory with a for loop
-                filename_iter = 0
-                for file in os.listdir(dest_dir+filename):
-                    filename_iter += 1
-					
-				# saving the filename with the suffix being equal to filename_iter
-                filename = filename+'_'+str(filename_iter)
-                open(save_dest+filename+'.xml','w').write(line)
-				
-			# print statement to command line for progress and debugging
-            print (filename+' written to: '+dest_dir+filename)
-			
-			# write our filename to our log
-            log.write(filename+'\n')
-            
-			# rename our log file to '' to prep for the next header
-			filename = ''
-			
-        # elif that creates the filename variable if the substring 'Content-ID is found in the line string
-		elif 'Content-ID' in str(line):
-			
-			# filename first equals the whole line
-            filename = str(line)
-			
-			# the preceding part before the lexis guid is removed
-            filename = filename.replace('Content-ID: urn:contentItem:','')
-			
-			#then the following portion, leaving just the guid 
-            filename = filename.replace('@lexisnexis.com','')
-			
-			# print statement to command line for progress and debugging
-            print(filename)
-        
-		# else statement for when the line is not the guid or the xml string, preserves the filename variable
-		else:
-            filename=filename
+def exe_parser(file_dir,dest_dir,log_var,dir_done,dir_total):
+    if os.path.isdir(dest_dir+'last_line.txt') == True:
+        last_line = int(open(dest_dir+'last_line.txt','r').readline())
+    else:
+        last_line = 0
+    os.mkdir(dest_dir) if os.path.isdir(dest_dir) != True else print(dest_dir)
+    if os.path.isdir(log_var) != True:
+         os.mkdir(log_var)
+    large_file = open(file_dir,'r')
+    log = open(log_var+'exe_parser_log.txt','a')
+    filename = ''
+    line_done = 0
+    for line in large_file:
+        if line_done != last_line:
+            line_done += 1
+        else:
+            if 'courtCaseDoc' in str(line) and filename != '':
+                save_dest = dest_dir+filename+'/'
+                if os.path.isdir(save_dest) == False:
+                    os.mkdir(save_dest)
+                    open(save_dest+filename+'.xml','w').write(line)
+                else:
+                    filename_iter = 0
+                    for file in os.listdir(dest_dir+filename):
+                        filename_iter += 1
+                    filename = filename+'_'+str(filename_iter)
+                    open(save_dest+filename+'.xml','w').write(line)
+                print (filename+' written at: '+str(dt.datetime.now()))
+                total_percent = dir_done/dir_total*100
+                print ('total:'+str(total_percent)+'%'+'\n')
+                open (dest_dir+'last_line.txt','w').write(str(line_done))
+                
+                log.write(filename+'\n')
+                    
+                filename = ''
+              
+            elif 'Content-ID' in str(line):
+                filename = str(line)
+              
+                filename = filename.replace('Content-ID: urn:contentItem:','')
+                filename = filename.replace('@lexisnexis.com','')
+                filename = filename.replace('\n','')
+                
+              
+            else:
+                pass
+            line_done += 1
+            last_line = line_done
 
-# test_dir = 'test_exe_files/'
-# test_file = '735dc2ac-599b-4f8b-9bc6-1df234c4e4a6'
-# test_dest = 'case_files/'
-# exe_parser(test_dir+test_file,test_dir+test_dest)
 
-# for file in os.listdir(test_dir):
-    # exe_parser(test_dir+file,test_dest)
+def file_crack(s,d,l):
+    total = 0
+    done = 0
+    for file in os.listdir(s):
+        total +=1
+    if os.path.isdir(d) != True:
+        os.mkdir(d)
+        c_log = open(d+'completed_log.txt','a')
+        c_list = []
+    else:
+        c_log = open(d+'completed_log.txt','r')
+        c_list = [item[:len(item)-1] for item in c_log]
+    for file in os.listdir(s):
+        if file in c_list:
+            print (file + ' already complete. Skipping')
+            done += 1
+        elif os.path.getsize(s+file) >= 500000000:
+            open(d+'too_big.txt', 'a').write(str(file)+'\n')
+            print(str(file)+' IS TOO BIG \n'*100)
+            done += 1
+        else:
+            print(str(file))
+            exe_parser(s+file,d,l,done,total)
+            open(d+'completed_log.txt','a').write(str(file)+'\n')
+            done += 1
+
+so = 'media/removable/HuddartHD/Supreme_Court_Data/'
+de = 'media/removable/HuddartHD/case_files/'
+lo = 'media/removable/HuddartHD/logs/'
+
+pool = Pool()
+# result =
+pool.apply(file_crack(so,de,lo))
+# result.get(timeout=1)
