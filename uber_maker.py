@@ -18,6 +18,7 @@ import os
 from random import randint
 import datetime as dt
 from index_inserter import index_inserter
+import multiprocessing as mp
 
 # all paths that don't end in a file must end with '/'!
 
@@ -32,10 +33,10 @@ def uber_maker(s_dir,d_dir,e_file):
     e_list = [line[:len(line)-1] for line in open(e_file,'r')]
     
     # a file of completed ubers is kept to avoid duplicates during reruns. opened as an appenable file
-    open(d_dir+'completed.txt','a')
+    c_log = d_dir+'completed.txt'
     
     # a list of completed files is created to compare below
-    c_list = [line[:len(line)-1] for line in open(d_dir+'completed.txt', 'r')]
+    c_list = [line[:len(line)-1] for line in open(c_log, 'r')]
     
     # a log file is created in the destination directory and named using datetime library for unique filenames
     # log is encoded in utf-8, because certain characters (e.g. the section symbol) will throw a >128 ordinal range error if they are not encoded
@@ -68,10 +69,10 @@ def uber_maker(s_dir,d_dir,e_file):
                 tree = et.parse(s_dir+file+'/'+xml)
                 root = tree.getroot()
                 
-                # if the xml has the status="full" tag it is the primary 
+                # if the xml has the status="full" tag it is the primary
                 if et.iselement(root.find('.//*[@status="full"]')) == True or len(os.listdir(s_dir+file))==1:
                     
-                    # is written to the destination directory 
+                    # is written to the destination directory
                     uber_xml = 'uber' + file +'.xml'
                     tree.write(d_dir+uber_xml)
                     
@@ -91,7 +92,7 @@ def uber_maker(s_dir,d_dir,e_file):
                 # if the exclusion list is empty all tags from the uber_file are added and then filtered in the next block
                 if el.tag in e_list or e_list == []:
                     
-                    # attributes of the element are unique enough to be a good comparison 
+                    # attributes of the element are unique enough to be a good comparison
                     uber_list.append(el.attrib)
                 
                 # tags are randomly let in to improve the pool of exclusion tags
@@ -111,7 +112,7 @@ def uber_maker(s_dir,d_dir,e_file):
                 # add header of source and destination to log
                 log.write(xml+' to '+uber_xml)
                 
-                # create source root from xml 
+                # create source root from xml
                 source_root = et.parse(d_dir+'temp'+'/'+xml).getroot()
                 
                 # parse through source_file iterable and use index insert function
@@ -145,15 +146,20 @@ def uber_maker(s_dir,d_dir,e_file):
                 os.remove(d_dir+'temp'+'/'+xml)
                 
             ##when file completed write to c_file##
-            open(d_dir+'completed.txt','a').write(file+"\n")
+            open(c_log,'a').write(file+"\n")
             
             ##delete temp file##
             os.rmdir(d_dir+'temp')
             
-###test###
+##test###
 
-# s_def = 'case_files/'
-# d_def = 'uberfiles/'
-# e_def = 'logs/exclusion_log.txt'
+s = 'case_files/'
+d = 'uberfiles/'
+e = 'xml-database/logs/exclusions.txt'
 
-# uber_maker(s_def,d_def,e_def)
+uber_maker(s,d,e)
+
+# pool = mp.Pool()
+
+# results = pool.apply_async(uber_maker(s,d,e))
+# results.get(timeout=1)
