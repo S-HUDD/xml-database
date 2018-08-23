@@ -85,6 +85,7 @@ def exe_parser(file_dir,dest_dir,log_var,dir_done,dir_total):
                 pass
             line_done += 1
             last_line = line_done
+    os.remove(dest_dir+'last_line.txt')
 
 
 def file_crack(s,d,l):
@@ -92,13 +93,13 @@ def file_crack(s,d,l):
     done = 0
     for file in os.listdir(s):
         total +=1
+    c_log = l + 'exe_parser_completed_log.txt'
     if os.path.isdir(d) != True:
         os.mkdir(d)
-        c_log = open(d+'completed_log.txt','a')
         c_list = []
     else:
-        c_log = open(d+'completed_log.txt','r')
-        c_list = [item[:len(item)-1] for item in c_log]
+        open(c_log,'a')
+        c_list = [item[:len(item)-1] for item in open(c_log,'r')]
     for file in os.listdir(s):
         if file in c_list:
             print (file + ' already complete. Skipping')
@@ -110,12 +111,12 @@ def file_crack(s,d,l):
         else:
             print(str(file))
             exe_parser(s+file,d,l,done,total)
-            open(d+'completed_log.txt','a').write(str(file)+'\n')
+            open(c_log,'a').write(str(file)+'\n')
             done += 1
 
-so = 'media/removable/HuddartHD/Supreme_Court_Data/'
-de = 'media/removable/HuddartHD/case_files/'
-lo = 'media/removable/HuddartHD/logs/'
+so = 'supreme_court_raw/'
+de = 'case_files/'
+lo = 'xml-database/logs/'
 
 pool = Pool()
 # result =
