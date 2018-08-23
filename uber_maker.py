@@ -34,6 +34,7 @@ def uber_maker(s_dir,d_dir,e_file):
     
     # a file of completed ubers is kept to avoid duplicates during reruns. opened as an appenable file
     c_log = d_dir+'completed.txt'
+    open(c_log,'a')
     
     # a list of completed files is created to compare below
     c_list = [line[:len(line)-1] for line in open(c_log, 'r')]
@@ -42,7 +43,11 @@ def uber_maker(s_dir,d_dir,e_file):
     # log is encoded in utf-8, because certain characters (e.g. the section symbol) will throw a >128 ordinal range error if they are not encoded
     os.mkdir(d_dir+'outputlogs') if os.path.isdir(d_dir+'outputlogs') != True else print('Log destination: '+d_dir+'outputlogs')
     log=open(d_dir+'outputlogs/'+str(dt.datetime.now())+'output.txt',"a",encoding='utf-8')
-    
+    # loop to count files and output % completion
+    total = 0
+    done = 0
+    for file in os.listdir(s_dir):
+        total += 1
     # iteration through every file in the source directory
     for file in os.listdir(s_dir):
         
@@ -52,7 +57,6 @@ def uber_maker(s_dir,d_dir,e_file):
         
         # else loop containing main body of function
         else:
-            
             # creating a temporary file where non-primary files will be sent during the comparison portion of the code
             if os.path.isdir(d_dir+'temp') != True:
                 os.mkdir(d_dir+'temp')
@@ -65,7 +69,8 @@ def uber_maker(s_dir,d_dir,e_file):
             # for loop for finding the primary file among the .xml files in the "file"
             for xml in os.listdir(s_dir+file):
                 
-                #  lxml call to create root and tree
+                # lxml call to create root and tree
+                uber_xml = ''
                 tree = et.parse(s_dir+file+'/'+xml)
                 root = tree.getroot()
                 
@@ -75,15 +80,22 @@ def uber_maker(s_dir,d_dir,e_file):
                     # is written to the destination directory
                     uber_xml = 'uber' + file +'.xml'
                     tree.write(d_dir+uber_xml)
-                    
-                    # and the uber_root is made
-                    uber_tree = et.parse(d_dir+uber_xml)
-                    uber_root = uber_tree.getroot()
+                    print (str(done/total*100)+'% complete... '+uber_xml + 'written...')
                     
                 # non-uberfiles written to temp file
                 else:
                     tree.write(d_dir+'temp'+'/'+xml)
+                    print (str(done/total*100)+'% complete... '+xml + '-temp written...')
                     
+            # The uber_root is made. If no uber_root was made in the previous block, the last temp xml is used as the uber_roots
+            if uber_xml == '':
+                uber_xml = 'uber' + file +'.xml'
+                tree.write(d_dir+uber_xml)
+            else:
+                pass
+            uber_tree = et.parse(d_dir+uber_xml)
+            uber_root = uber_tree.getroot()
+                
             # create uber_list from uber_root
             uber_list = []
             for el in uber_root.iter():
@@ -94,10 +106,12 @@ def uber_maker(s_dir,d_dir,e_file):
                     
                     # attributes of the element are unique enough to be a good comparison
                     uber_list.append(el.attrib)
+                    print (str(done/total*100)+'% complete... '+str(el.tag)+' appened to uber_list')
                 
                 # tags are randomly let in to improve the pool of exclusion tags
                 elif randint(1,10) == 10:
                     uber_list.append(el.attrib)
+                    print (str(done/total*100)+'% complete... '+'random '+str(el.tag)+ 'appended to uber_list')
                 
                 # tags that aren't accepted are passed
                 else:
@@ -123,7 +137,7 @@ def uber_maker(s_dir,d_dir,e_file):
                         
                         # elements with attributes matching those found in the uber_list are removed
                         if el.attrib in uber_list:
-                            print (el.tag + " already in uber_list. Skipping...")
+                            print (str(done/total*100)+'% complete... '+el.tag + " already in uber_list. Skipping...")
                         
                         # these elements are missing from the destination uber
                         else:
@@ -141,6 +155,7 @@ def uber_maker(s_dir,d_dir,e_file):
                                 pass
                     else:
                         pass
+                    print(str(done/total*100)+'% complete... ')
                 
                 # the xml is removed from the temp file
                 os.remove(d_dir+'temp'+'/'+xml)
@@ -150,16 +165,16 @@ def uber_maker(s_dir,d_dir,e_file):
             
             ##delete temp file##
             os.rmdir(d_dir+'temp')
-            
+        done += 1
 ##test###
 
 s = 'case_files/'
 d = 'uberfiles/'
 e = 'xml-database/logs/exclusions.txt'
 
-uber_maker(s,d,e)
+# uber_maker(s,d,e)
 
-# pool = mp.Pool()
+pool = mp.Pool()
 
-# results = pool.apply_async(uber_maker(s,d,e))
+results = pool.apply(uber_maker(s,d,e))
 # results.get(timeout=1)
