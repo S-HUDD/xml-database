@@ -174,7 +174,7 @@ def uber_maker(s_dir,d_dir,l_dir,e_file):
 
 # s = 'case_files/'
 # d = 'uberfiles/'
-# e = 'xml-database/logs/exclusions.txt'
+# e = 'xml-database/exclusions.txt'
 
 
 # pool = Pool()
