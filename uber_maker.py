@@ -18,18 +18,18 @@ import os
 from random import randint
 import datetime as dt
 from index_inserter import index_inserter
-import multiprocessing as mp
+from multiprocessing import Pool
 
 # all paths that don't end in a file must end with '/'!
 
-# uber_maker function accepts 3 arguments: a source directory s_dir, and destination directory "d_dir", and a exclusion file destination "e_file"
+# uber_maker function accepts 3 arguments: a source directory s_dir, and destination directory "d_dir", a log file directory 'l_dir', and a exclusion file destination "e_file"
 
-def uber_maker(s_dir,d_dir,e_file):
+def uber_maker(s_dir,d_dir,l_dir,e_file):
     
     # make destination file if it doesn't already exist
     os.mkdir(d_dir) if os.path.isdir(d_dir) != True else print('Uber destination: '+d_dir)
     
-    # exclusions list created from elements in the exclusion file. len(line)-1 is used to avoid copying the '\n' character at the end of each tag
+    # exclusions list populated with elements in the exclusion file. len(line)-1 is used to avoid copying the '\n' escape character at the end of each tag
     e_list = [line[:len(line)-1] for line in open(e_file,'r')]
     
     # a file of completed ubers is kept to avoid duplicates during reruns. opened as an appenable file
@@ -41,8 +41,8 @@ def uber_maker(s_dir,d_dir,e_file):
     
     # a log file is created in the destination directory and named using datetime library for unique filenames
     # log is encoded in utf-8, because certain characters (e.g. the section symbol) will throw a >128 ordinal range error if they are not encoded
-    os.mkdir(d_dir+'outputlogs') if os.path.isdir(d_dir+'outputlogs') != True else print('Log destination: '+d_dir+'outputlogs')
-    log=open(d_dir+'outputlogs/'+str(dt.datetime.now())+'output.txt',"a",encoding='utf-8')
+    os.mkdir(l_dir+'uber_maker_output_logs') if os.path.isdir(l_dir+'uber_maker_output_logs') != True else print('Log destination: '+l_dir+'uber_maker_output_logs')
+    log=open(l_dir+'uber_maker_output_logs/'+str(dt.datetime.now())+'output.txt',"a",encoding='utf-8')
     # loop to count files and output % completion
     total = 0
     done = 0
@@ -172,13 +172,15 @@ def uber_maker(s_dir,d_dir,e_file):
         done += 1
 ##test###
 
-s = 'media/simon/HuddartHD/case_files/'
-d = 'media/simon/HuddartHD/uberfiles/'
-e = 'media/simon/HuddartHD//logs/exclusions.txt'
+# s = 'case_files/'
+# d = 'uberfiles/'
+# e = 'xml-database/logs/exclusions.txt'
 
-# uber_maker(s,d,e)
 
-pool = mp.Pool()
+# pool = Pool()
 
-results = pool.apply(uber_maker(s,d,e))
-# results.get(timeout=1)
+# try:
+#     pool.apply(uber_maker(s,d,e))
+# except TypeError:
+#     print complete
+
