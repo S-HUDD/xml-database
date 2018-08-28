@@ -71,21 +71,25 @@ def uber_maker(s_dir,d_dir,e_file):
                 
                 # lxml call to create root and tree
                 uber_xml = ''
-                tree = et.parse(s_dir+file+'/'+xml)
-                root = tree.getroot()
-                
-                # if the xml has the status="full" tag it is the primary
-                if et.iselement(root.find('.//*[@status="full"]')) == True or len(os.listdir(s_dir+file))==1:
+                try:
+                    tree = et.parse(s_dir+file+'/'+xml)
+                    root = tree.getroot()
                     
-                    # is written to the destination directory
-                    uber_xml = 'uber' + file +'.xml'
-                    tree.write(d_dir+uber_xml)
-                    print (str(done/total*100)+'% complete... '+uber_xml + 'written...')
-                    
-                # non-uberfiles written to temp file
-                else:
-                    tree.write(d_dir+'temp'+'/'+xml)
-                    print (str(done/total*100)+'% complete... '+xml + '-temp written...')
+                    # if the xml has the status="full" tag it is the primary
+                    if et.iselement(root.find('.//*[@status="full"]')) == True or len(os.listdir(s_dir+file))==1:
+                        
+                        # is written to the destination directory
+                        uber_xml = 'uber' + file +'.xml'
+                        tree.write(d_dir+uber_xml)
+                        print (str(done/total*100)+'% complete... '+uber_xml + 'written...')
+                        
+                    # non-uberfiles written to temp file
+                    else:
+                        tree.write(d_dir+'temp'+'/'+xml)
+                        print (str(done/total*100)+'% complete... '+xml + '-temp written...')
+                except SyntaxError:
+                    print ('Extra content at the end of the document. Deleted')
+                    os.remove(s_dir+file+'/'+xml)
                     
             # The uber_root is made. If no uber_root was made in the previous block, the last temp xml is used as the uber_roots
             if uber_xml == '':
@@ -168,9 +172,9 @@ def uber_maker(s_dir,d_dir,e_file):
         done += 1
 ##test###
 
-s = 'case_files/'
-d = 'uberfiles/'
-e = 'xml-database/logs/exclusions.txt'
+s = 'media/simon/HuddartHD/case_files/'
+d = 'media/simon/HuddartHD/uberfiles/'
+e = 'media/simon/HuddartHD//logs/exclusions.txt'
 
 # uber_maker(s,d,e)
 
